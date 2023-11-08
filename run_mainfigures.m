@@ -489,7 +489,7 @@ for s=1:length(alldata)
     
 end
 
-%% 6 bar plot
+%% 6 bar plots to compare model predictions
 gambling_frequency_modelgenerated_comm = nan(length(alldata),3);
 gambling_frequency_modelgenerated_odd = nan(length(alldata),3);
 gambling_frequency_modelgenerated_2_comm = nan(length(alldata),3);
@@ -559,16 +559,16 @@ figure1 = figure('color',[1 1 1]);
 width=800; height=800;
 set(gcf,'position',[10,10,width,height])
 subplot(2,2,1); hold on; 
-list_yloc_sigbars = [70,55,45];
+list_yloc_sigbars = [70,55,48.5];
 model_predictions_6barplot(gambling_frequency_comm,gambling_frequency_rare,list_yloc_sigbars,ylabel_name_text,model_name_realdata,color_comm_realdata,color_rare_realdata);
 subplot(2,2,2); hold on;
-list_yloc_sigbars = [65,58,47];
+list_yloc_sigbars = [65,58,48.5];
 model_predictions_6barplot(gambling_frequency_modelgenerated_3_comm,gambling_frequency_modelgenerated_3_odd,list_yloc_sigbars,ylabel_name_text,model_name,color_comm_sim,color_rare_sim); 
 subplot(2,2,3); hold on;
-list_yloc_sigbars = [65,58,47];
+list_yloc_sigbars = [65,58,48.5];
 model_predictions_6barplot(gambling_frequency_modelgenerated_comm,gambling_frequency_modelgenerated_odd,list_yloc_sigbars,ylabel_name_text,model_name_1,color_comm_sim,color_rare_sim);
 subplot(2,2,4); hold on;
-list_yloc_sigbars = [65,58,47];
+list_yloc_sigbars = [65,58,49];
 model_predictions_6barplot(gambling_frequency_modelgenerated_2_comm,gambling_frequency_modelgenerated_2_odd,list_yloc_sigbars,ylabel_name_text,model_name_2,color_comm_sim,color_rare_sim); 
 
 
@@ -927,21 +927,25 @@ function b = model_predictions_6barplot(gambling_frequency_comm,gambling_frequen
     se_bars = [common_se; oddballs_se];
     grouped_bars = vertcat(nanmean(gambling_frequency_comm),nanmean(gambling_frequency_rare))';
     
-    
-%     subplot(1,3,1);
-    hold on
+    hold on;
     b = bar(grouped_bars,'grouped','EdgeColor','black','LineWidth',1.5,'BarWidth', 0.8); 
     set(b(1),...
         'FaceColor',color_comm);
     set(b(2),...
         'FaceColor',color_rare);
+    for x = 1:3
+        swarmchart(repmat(b(1).XData(x)-0.15, length(gambling_frequency_comm), 1),gambling_frequency_comm(:,x),2,...
+            'MarkerFaceColor','#adbaff','MarkerEdgeColor','#c9c9c9','XJitter','density','XJitterWidth',0.1);
+        swarmchart(repmat(b(2).XData(x)+0.15, length(gambling_frequency_rare), 1),gambling_frequency_rare(:,x),2,...
+            'MarkerFaceColor','#ffd4d4','MarkerEdgeColor','#c9c9c9','XJitter','density','XJitterWidth',0.1);
+    end    
     ylim([0 80]);
     set(gca,'xtick',1:3,'xticklabel',{'Gain trials','Mixed trials','Loss trials'});
     ylabel(ylabel_name);
     title(study_title);
-    hline = refline(0,50); hline.Color = 'black'; hline.LineStyle = '--';
-    ylim([25 75])
-    yticks(30:10:70);
+    hline = refline(0,50); hline.Color = 'black'; hline.LineStyle = '--'; hline.LineWidth= 0.2;
+    ylim([0 100])
+    yticks(0:25:100);    
     [ngroups,nbars] = size(grouped_bars);
     % Get the x coordinate of the bars
     for i = 1:nbars
@@ -949,20 +953,19 @@ function b = model_predictions_6barplot(gambling_frequency_comm,gambling_frequen
         ydt(i,:) = b(i).YData;    
     end
     errorbar(ctr, ydt, se_bars, '.black','LineWidth',2,'CapSize',7)
-%     list_yloc = [70,55,45];
     for i = 1:ngroups
         xloc = [b(1).XData(i)+b(1).XOffset,b(2).XData(i)+b(2).XOffset];
         yloc = [list_yloc(i),list_yloc(i)];
         plot(xloc,yloc,...
             'color', 'k',...
             'linewidth', 1);
-        text(mean(xloc),mean(yloc)+1,sig_stars(i),...
+        text(mean(xloc),mean(yloc)+3.5,sig_stars(i),...
             'fontsize',fz(i),...
             'HorizontalAlignment', 'center',...
             'VerticalAlignment', 'middle');
     end
-    text(0.55,73,sprintf('n=%.0f',length(gambling_frequency_rare)),'fontsize',14,'HorizontalAlignment', 'left');
-    legend({'Common','Rare'});
+    text(0.6,95,sprintf('n=%.0f',length(gambling_frequency_rare)),'fontsize',14,'HorizontalAlignment', 'left');
+%     legend({'Common','Rare'});
     hold off
 
 end
