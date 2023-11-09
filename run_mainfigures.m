@@ -6,25 +6,25 @@ tic
 
 setFigureDefaults;
 
-load('Exp1_cleaned.mat')
-exp1 = alldata; % study 1
+load('Exp1_data.mat')
+exp1 = alldata;
 
-load('Exp2_cleaned.mat')
-exp2 = alldata; % study 2
+load('Exp2_data.mat')
+exp2 = alldata;
 
-load('Exp3_cleaned.mat')
+load('Exp3_data.mat')
 exp3 = alldata;
 
-load('Exp4_cleaned.mat')
-exp4 = alldata; % study 3
+load('Exp4_data.mat')
+exp4 = alldata; 
 
-load('Exp5_cleaned.mat')
-exp5 = alldata; % study 4
+load('Exp5_data.mat')
+exp5 = alldata;
 
-load('Exp6_cleaned.mat')
+load('Exp6_data.mat')
 exp6 = alldata;
 
-load('Exp7_cleaned.mat')
+load('Exp7_data.mat')
 exp7 = alldata;
 
 

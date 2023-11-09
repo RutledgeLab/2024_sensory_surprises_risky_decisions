@@ -10,7 +10,7 @@ FOLDER CONTENTS
 -----------------------------------------------------------------------------------------------------
 * 'run_mainfigures.m' is the main script that produces the key analyses and figures in the manuscript
 
-* 'Exp[1-7]_cleaned.mat' contain pre-processed data for each of the seven experiments (total n = 1600) discussed in the manuscript
+* 'Exp[1-7]_cleaned.mat' contain the data for each of the seven experiments (total n = 1600) discussed in the manuscript
 
 * 'fitmodel_omnibus_OBdiff_model.m' contains the script that defines and runs the main models. This script uses Maximum Likelihood Estimation (MLE) for parameter estimation.
 
