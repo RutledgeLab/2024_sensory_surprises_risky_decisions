@@ -55,10 +55,10 @@ DEMO & INSTRUCTIONS FOR USE
 
 1. Open 'run_mainfigures.m'. 
 2. Run the script 
-	* Expected run time: 5.5 minutes
-	* Expected output: All Figures (2A,2B,2C,2D,3A,3B,3C,3D,4,5,6) from the manuscript. Key statistics from figures are printed in the console
-3. Different studies can be selected in the '%% select a single study to make plots for' section (line 40-50) to produce plots and analyses for different datasets. 
-	* For example: '%% Figure 5 & 6: Both Persev & Bias Effects on the same plot.' can produce Figures 5 and 6 from the manuscript if Exp 3-6 are assigned to'alldata' variable on line 40 and the analysis script is rerun.
+	* Expected run time: 5 minutes
+	* Expected output: All Figures (2A,2B,2C,2D,3A,3B,3C,3D,4,5B,5C,6B,6C) from the manuscript. Key statistics from figures are printed in the console
+3. Different studies can be selected in the '%% select a single study to make plots for' section (line 42-46) to produce plots and analyses for different datasets. 
+	* For example: '%% Figure 5 & 6: Both Persev & Bias Effects on the same plot.' can produce Figures 5C1, 5C2, 6C1, 6C2 from the manuscript if Experiments 3,4,5,or 6 are assigned to 'alldata' variable on line 44 and the analysis script is rerun.
 
 
 
