@@ -706,7 +706,7 @@ source_data_5b2 = table(stay_gain_rarecommdiff_realdata,stay_mixed_rarecommdiff_
 
 source_data_6b2 = table(stay_gain_rarecommdiff_realdata,stay_mixed_rarecommdiff_realdata,stay_loss_rarecommdiff_realdata,...
     stay_gain_rarecommdiff_rbpersevdiff,stay_mixed_rarecommdiff_rbpersevdiff,stay_loss_rarecommondiff_rbpersevdiff);
-writetable(source_data_6b2,'source_data_6b2.csv')
+% writetable(source_data_6b2,'source_data_6b2.csv')
 
 %% Figure 4, 5B or 6B: Lapse model and delta mu model risk taking predictions comparison 
 % Comparing Model Generated and Real data Rare - Common Gambling Rates
@@ -1066,12 +1066,15 @@ function b = threebarplot_modelpredictions_ontop(bar_data,ylabel_name,yaxislimit
     se_bars = std(bar_data,'omitnan')./sqrt(sum(~isnan(bar_data)));
     
 
+
     trial_types = {'gain','mixed','loss'};
     for i = 1:3
         [OCdiffp_value,~] = signrank(bar_data(:,i));
-        fprintf(sprintf('Rare - Comm rate diff %s trials %s: (%.02f %s %.02f%s, p = %.03f)\n',...
+        [bf10_3bar,~] = ttest_bf(bar_data(:,i));
+        bf01_3bar = 1/bf10_3bar;       
+        fprintf(sprintf('Rare - Comm rate diff %s trials %s: (%.02f %s %.02f%s, p = %.03f, BF01 = %.02f)\n',...
             study_title,trial_types{i},mean(bar_data(:,i),'omitnan'),char(177),...
-            se_bars(:,i),'%%',OCdiffp_value))
+            se_bars(:,i),'%%',OCdiffp_value,bf01_3bar))
     end    
     
     
