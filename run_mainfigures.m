@@ -28,19 +28,23 @@ load('Exp7_data.mat')
 exp7 = alldata;
 
 
-%% Combine experiments 1 and 2
+%% Combine individual experiments
 
 datasets = {exp1,exp2};
-combined_dataset = {};
+exp1exp2 = vertcat(datasets{:}); % combines multiple struct arrays
 
-n400 = vertcat(datasets{:}); % combines multiple struct arrays
+datasets = {exp3,exp4};
+exp3exp4 = vertcat(datasets{:}); % combines multiple struct arrays
+
+datasets = {exp5,exp6};
+exp5exp6 = vertcat(datasets{:}); % combines multiple struct arrays
 
 %% select a single study to make plots for
 
-alldata = n400;
-study_title = 'Exp. 1 & Exp. 2';
+alldata = exp1exp2;
+study_title = 'Experiments 1 and 2';
 
-%% select 2 studies I want to compare
+%% select 2 individual studies I want to compare
 
 
 study1 = exp1;
@@ -231,29 +235,38 @@ pseudor2_study1 = nan(length(study1),1);
 pseudor2_study2 = nan(length(study2),1);
 pseudor2_study12 = nan(length(alldata),1);
 
+pt_probstay_idx = 19;
+model1_risktaking_idx = 20;
+model2_risktaking_idx = 21;
+fullmodel_risktaking_idx = 22;
+model1_stay_idx =  24;
+model2_stay_idx = 25;
+fullmodel_stay_idx = 23;
+
 
 for s=1:length(alldata)
     fprintf(sprintf('fitting model to participant %.0f of %.0f...\n',s,length(alldata)))
-    result = fitmodel_pt(alldata(s).data); %fits 6-parameter approach-avoid model
+    result = fitmodel_pt(alldata(s).data); %fits 4-parameter Prospect Theory model
     alldata(s).result_pt = result;
     alldata(s).b_pt = result.b;
-    alldata(s).data(:,20) = result.probchoice; % probchoice from pt
+    alldata(s).data(:,model1_risktaking_idx) = result.probchoice; % probchoice from pt
     prev_choice = alldata(s).data(1:end-1,7);
-%     prev = alldata(s).data(1:end-1,20);
-    curr = alldata(s).data(2:end,20);
-    curr_probstay = alldata(s).data(2:end,20);
+%     prev = alldata(s).data(1:end-1,model1_risktaking_idx);
+    curr = alldata(s).data(2:end,model1_risktaking_idx);
+    curr_probstay = alldata(s).data(2:end,model1_risktaking_idx);
     curr_probstay(prev_choice==0) = 1-curr(prev_choice == 0);
-    alldata(s).data(:,21) = [NaN; curr_probstay]; % probstay from pt
+    alldata(s).data(:,pt_probstay_idx) = [NaN; curr_probstay]; % probstay from pt
     pseudor2_study12(s,1) = result.pseudoR2;
     
     
     result = fitmodel_omnibus_OBdiff_model(alldata(s).data,choice_split);
     alldata(s).result_omnibus_apav_model = result;
-    alldata(s).data(:,22) = result.probchoice; % saving probchoice in 22nd data column
-    curr_model = alldata(s).data(2:end,22);
-    curr_probstay_model = alldata(s).data(2:end,22);
+    alldata(s).data(:,fullmodel_risktaking_idx) = result.probchoice; % saving probchoice in 22nd data column
+    curr_model = alldata(s).data(2:end,fullmodel_risktaking_idx);
+    curr_probstay_model = alldata(s).data(2:end,fullmodel_risktaking_idx);
     curr_probstay_model(prev_choice==0) = 1-curr_model(prev_choice==0);
-    alldata(s).data(:,23) = [NaN; curr_probstay_model];
+    alldata(s).data(:,fullmodel_stay_idx) = [NaN; curr_probstay_model];
+
     apav_params(s,:) = result.b(choice_split);
     apav_params_betalabels = alldata(1).result_omnibus_apav_model.betalabel(choice_split); 
 end
@@ -279,7 +292,7 @@ for s=1:length(study2)
 end
 
 
-%% Figure 5 & 6: Both Persev & Bias Effects on the same plot.  
+%% Figure 5C & 6C: Both Persev & Bias Effects on the same plot.  
 
 splitpersev = apav_params(:,strcmp(apav_params_betalabels,'{\Delta} persev'));
 splitrb = apav_params(:,strcmp(apav_params_betalabels,'{\Delta} risky bias'));
@@ -301,17 +314,17 @@ modelbased_barplot(splitrb,splitpersev,ylabel_text,xaxis_labels,yaxislimits,bar_
 
 riskybias_diff = splitrb;
 persev_diff = splitpersev;
-% source_data_5a = table(riskybias_diff,persev_diff);
-% writetable(source_data_5a,'source_data_5a.csv')
+% source_data_5c1 = table(riskybias_diff,persev_diff);
+% writetable(source_data_5c1,'source_data_5c1.csv')
 
-% source_data_5b = table(riskybias_diff,persev_diff);
-% writetable(source_data_5b,'source_data_5b.csv')
+% source_data_5c2 = table(riskybias_diff,persev_diff);
+% writetable(source_data_5c2,'source_data_5c2.csv')
 
-% source_data_6a = table(riskybias_diff,persev_diff);
-% writetable(source_data_6a,'source_data_6a.csv')
+% source_data_6c1 = table(riskybias_diff,persev_diff);
+% writetable(source_data_6c1,'source_data_6c1.csv')
 
-% source_data_6b = table(riskybias_diff,persev_diff);
-% writetable(source_data_6b,'source_data_6b.csv')
+% source_data_6c2 = table(riskybias_diff,persev_diff);
+% writetable(source_data_6c2,'source_data_6c2.csv')
 
 %% Figure 2D: Risk Taking Main effect (model-based): Studies 1 and 2 separately
 splitrb_study1 = apav_params_study1(:,strcmp(apav_params_betalabels,'{\Delta} risky bias'));
@@ -419,7 +432,7 @@ for s=1:length(alldata)
     med_stay(s,1) = 0;
 
     % if 50% is lower than 1st quartile, then exclude
-    quartiles_stay = quantile(t(:,21),3);
+    quartiles_stay = quantile(t(:,pt_probstay_idx),3);
     if quartiles_stay(1) >= 0.5
         continue
     end
@@ -427,8 +440,8 @@ for s=1:length(alldata)
         continue
     end
 
-    percentile_common = round(tstay_common(:,21)*(nbins-1)-med_stay(s,1))+1;
-    percentile_rare = round(tstay_rare(:,21)*(nbins-1)-med_stay(s,1))+1;
+    percentile_common = round(tstay_common(:,pt_probstay_idx)*(nbins-1)-med_stay(s,1))+1;
+    percentile_rare = round(tstay_rare(:,pt_probstay_idx)*(nbins-1)-med_stay(s,1))+1;
 
     for n = 1:nbins        
         tstaybin_common(s,n) = nanmean(tstay_common(percentile_common==n,24)).*100;
@@ -452,10 +465,6 @@ source_data_3c = table(common_lowp,common_highp,rare_lowp,rare_highp);
 % writetable(source_data_3c,'source_data_3c.csv')
 
 
-%% Figure 4: Lapse model and delta mu model risk taking predictions comparison 
-% Comparing Model Generated and Real data Rare - Common Gambling Rates
-% Main Effects
-
 %% 8 parameter risky bias and perseveration model
 
 pseudor2_model_1 = nan(length(alldata),1);
@@ -464,6 +473,14 @@ AIC_model_1 = nan(length(alldata),1);
 AIC_model_2 = nan(length(alldata),1);
 apav_params_model_1 = nan(length(alldata),6);
 
+% pt_probstay_idx = 19;
+% model1_risktaking_idx = 20;
+% model2_risktaking_idx = 21;
+% fullmodel_risktaking_idx = 22;
+% model1_stay_idx =  24;
+% model2_stay_idx = 25;
+% fullmodel_stay_idx = 23;
+
 model_name_1 = 'Lapse model + \delta_{lapse}';
 % mu, lambda, alphagain, alphaloss, lapse comm, lapse odd
 
@@ -471,8 +488,14 @@ for s=1:length(alldata)
     fprintf(sprintf('fitting lapse model to participant %.0f of %.0f...\n',s,length(alldata)))
     result = fitmodel_pt_dLapsemodel(alldata(s).data);
     alldata(s).result_pt_dLapsemodel = result;
-    alldata(s).data(:,20) = result.probchoice; % saving probchoice in 22th data column
+    alldata(s).data(:,model1_risktaking_idx) = result.probchoice; % saving probchoice in 20th data column
     apav_params_model_1(s,:) = result.b;
+
+    prev_choice = alldata(s).data(1:end-1,7);
+    curr_probstay_model = alldata(s).data(2:end,model1_risktaking_idx);
+    curr_probstay_model(prev_choice==0) = 1-curr_probstay_model(prev_choice==0);
+    alldata(s).data(:,model1_stay_idx) = [NaN; curr_probstay_model];    
+        
 end
 
 % mu, delta mu, lambda, alphagain, alphaloss, persev, riskybias, 
@@ -485,11 +508,16 @@ for s=1:length(alldata)
     fprintf(sprintf('fitting delta mu model to participant %.0f of %.0f...\n',s,length(alldata)))
     result = fitmodel_omnibus_OBdiff_model(alldata(s).data,choice_split);
     alldata(s).result_omnibus_apav_model = result;
-    alldata(s).data(:,21) = result.probchoice; % saving probchoice in 22th data column
+    alldata(s).data(:,model2_risktaking_idx) = result.probchoice; % saving probchoice in 21st data column
+    prev_choice = alldata(s).data(1:end-1,7);
     
+    curr_probstay_model = alldata(s).data(2:end,model2_risktaking_idx);
+    curr_probstay_model(prev_choice==0) = 1-curr_probstay_model(prev_choice==0);
+    alldata(s).data(:,model2_stay_idx) = [NaN; curr_probstay_model];    
+        
 end
 
-%% 6 bar plots to compare model predictions
+%% Model predictions: Comparing different models
 gambling_frequency_modelgenerated_comm = nan(length(alldata),3);
 gambling_frequency_modelgenerated_odd = nan(length(alldata),3);
 gambling_frequency_modelgenerated_2_comm = nan(length(alldata),3);
@@ -506,28 +534,28 @@ for s = 1:length(alldata)
     % isolating trials where gamble is chosen
     gain_d = t(:,3)>0; mixed_d = t(:,3)==0; loss_d = t(:,3)<0;
     common = t(:,16)==1; oddball = t(:,16)~=1;
-    gambling_frequency_modelgenerated_comm(s,1) = mean(t(common & gain_d,20),'omitnan'); % common gain domain
-    gambling_frequency_modelgenerated_odd(s,1) = mean(t(oddball & gain_d,20),'omitnan'); % oddball gain   
-    gambling_frequency_modelgenerated_comm(s,2) = mean(t(common & mixed_d,20),'omitnan'); % common mixed domain
-    gambling_frequency_modelgenerated_odd(s,2) = mean(t(oddball & mixed_d,20),'omitnan'); % oddball mixed
-    gambling_frequency_modelgenerated_comm(s,3) = mean(t(common & loss_d,20),'omitnan'); % common loss domain
-    gambling_frequency_modelgenerated_odd(s,3) = mean(t(oddball & loss_d,20),'omitnan'); % oddball loss
+    gambling_frequency_modelgenerated_comm(s,1) = mean(t(common & gain_d,model1_risktaking_idx),'omitnan'); % common gain domain
+    gambling_frequency_modelgenerated_odd(s,1) = mean(t(oddball & gain_d,model1_risktaking_idx),'omitnan'); % oddball gain   
+    gambling_frequency_modelgenerated_comm(s,2) = mean(t(common & mixed_d,model1_risktaking_idx),'omitnan'); % common mixed domain
+    gambling_frequency_modelgenerated_odd(s,2) = mean(t(oddball & mixed_d,model1_risktaking_idx),'omitnan'); % oddball mixed
+    gambling_frequency_modelgenerated_comm(s,3) = mean(t(common & loss_d,model1_risktaking_idx),'omitnan'); % common loss domain
+    gambling_frequency_modelgenerated_odd(s,3) = mean(t(oddball & loss_d,model1_risktaking_idx),'omitnan'); % oddball loss
     avg_gambling_change_model_1(s,1) = mean(t(common,20),'omitnan');
     avg_gambling_change_model_1(s,2) = mean(t(oddball,20),'omitnan');
     
-    gambling_frequency_modelgenerated_2_comm(s,1) = mean(t(common & gain_d,21),'omitnan'); % common gain domain
-    gambling_frequency_modelgenerated_2_odd(s,1) = mean(t(oddball & gain_d,21),'omitnan'); % oddball gain   
-    gambling_frequency_modelgenerated_2_comm(s,2) = mean(t(common & mixed_d,21),'omitnan'); % common mixed domain
-    gambling_frequency_modelgenerated_2_odd(s,2) = mean(t(oddball & mixed_d,21),'omitnan'); % oddball mixed
-    gambling_frequency_modelgenerated_2_comm(s,3) = mean(t(common & loss_d,21),'omitnan'); % common loss domain
-    gambling_frequency_modelgenerated_2_odd(s,3) = mean(t(oddball & loss_d,21),'omitnan'); % oddball loss    
+    gambling_frequency_modelgenerated_2_comm(s,1) = mean(t(common & gain_d,model2_risktaking_idx),'omitnan'); % common gain domain
+    gambling_frequency_modelgenerated_2_odd(s,1) = mean(t(oddball & gain_d,model2_risktaking_idx),'omitnan'); % oddball gain   
+    gambling_frequency_modelgenerated_2_comm(s,2) = mean(t(common & mixed_d,model2_risktaking_idx),'omitnan'); % common mixed domain
+    gambling_frequency_modelgenerated_2_odd(s,2) = mean(t(oddball & mixed_d,model2_risktaking_idx),'omitnan'); % oddball mixed
+    gambling_frequency_modelgenerated_2_comm(s,3) = mean(t(common & loss_d,model2_risktaking_idx),'omitnan'); % common loss domain
+    gambling_frequency_modelgenerated_2_odd(s,3) = mean(t(oddball & loss_d,model2_risktaking_idx),'omitnan'); % oddball loss    
 
-    gambling_frequency_modelgenerated_3_comm(s,1) = mean(t(common & gain_d,22),'omitnan'); % common gain domain
-    gambling_frequency_modelgenerated_3_odd(s,1) = mean(t(oddball & gain_d,22),'omitnan'); % oddball gain   
-    gambling_frequency_modelgenerated_3_comm(s,2) = mean(t(common & mixed_d,22),'omitnan'); % common mixed domain
-    gambling_frequency_modelgenerated_3_odd(s,2) = mean(t(oddball & mixed_d,22),'omitnan'); % oddball mixed
-    gambling_frequency_modelgenerated_3_comm(s,3) = mean(t(common & loss_d,22),'omitnan'); % common loss domain
-    gambling_frequency_modelgenerated_3_odd(s,3) = mean(t(oddball & loss_d,22),'omitnan'); % oddball loss      
+    gambling_frequency_modelgenerated_3_comm(s,1) = mean(t(common & gain_d,fullmodel_risktaking_idx),'omitnan'); % common gain domain
+    gambling_frequency_modelgenerated_3_odd(s,1) = mean(t(oddball & gain_d,fullmodel_risktaking_idx),'omitnan'); % oddball gain   
+    gambling_frequency_modelgenerated_3_comm(s,2) = mean(t(common & mixed_d,fullmodel_risktaking_idx),'omitnan'); % common mixed domain
+    gambling_frequency_modelgenerated_3_odd(s,2) = mean(t(oddball & mixed_d,fullmodel_risktaking_idx),'omitnan'); % oddball mixed
+    gambling_frequency_modelgenerated_3_comm(s,3) = mean(t(common & loss_d,fullmodel_risktaking_idx),'omitnan'); % common loss domain
+    gambling_frequency_modelgenerated_3_odd(s,3) = mean(t(oddball & loss_d,fullmodel_risktaking_idx),'omitnan'); % oddball loss      
     
     gambling_frequency_comm(s,1) = mean(t(common & gain_d,7),'omitnan'); % common gain domain
     gambling_frequency_rare(s,1) = mean(t(oddball & gain_d,7),'omitnan'); % oddball gain   
@@ -548,70 +576,183 @@ gambling_frequency_modelgenerated_2_odd = gambling_frequency_modelgenerated_2_od
 gambling_frequency_modelgenerated_3_comm = gambling_frequency_modelgenerated_3_comm * 100;
 gambling_frequency_modelgenerated_3_odd = gambling_frequency_modelgenerated_3_odd * 100;
 
-ylabel_name_text = 'Chose risky option (%)';
-model_name_realdata = 'Real Data: Exp. 1 & 2'
-color_comm_realdata = [0.066666666666667 0.227450980392157 0.674509803921569];
-color_rare_realdata = [0.768627450980392 0.196078431372549 0.196078431372549];
-color_comm_sim = [0.266666666666667 0.427450980392157 0.874509803921569];
-color_rare_sim = [0.968627450980392 0.396078431372549 0.396078431372549];
-
-figure1 = figure('color',[1 1 1]); 
-width=800; height=800;
-set(gcf,'position',[10,10,width,height])
-subplot(2,2,1); hold on; 
-list_yloc_sigbars = [70,55,48.5];
-model_predictions_6barplot(gambling_frequency_comm,gambling_frequency_rare,list_yloc_sigbars,ylabel_name_text,model_name_realdata,color_comm_realdata,color_rare_realdata);
-subplot(2,2,2); hold on;
-list_yloc_sigbars = [65,58,48.5];
-model_predictions_6barplot(gambling_frequency_modelgenerated_3_comm,gambling_frequency_modelgenerated_3_odd,list_yloc_sigbars,ylabel_name_text,model_name,color_comm_sim,color_rare_sim); 
-subplot(2,2,3); hold on;
-list_yloc_sigbars = [65,58,48.5];
-model_predictions_6barplot(gambling_frequency_modelgenerated_comm,gambling_frequency_modelgenerated_odd,list_yloc_sigbars,ylabel_name_text,model_name_1,color_comm_sim,color_rare_sim);
-subplot(2,2,4); hold on;
-list_yloc_sigbars = [65,58,49];
-model_predictions_6barplot(gambling_frequency_modelgenerated_2_comm,gambling_frequency_modelgenerated_2_odd,list_yloc_sigbars,ylabel_name_text,model_name_2,color_comm_sim,color_rare_sim); 
-
 
 % save the source data
-gain_common_realdata = gambling_frequency_comm(:,1);
-mixed_common_realdata = gambling_frequency_comm(:,2);
-loss_common_realdata = gambling_frequency_comm(:,3);
-gain_rare_realdata = gambling_frequency_rare(:,1);
-mixed_rare_realdata = gambling_frequency_rare(:,2);
-loss_rare_realdata = gambling_frequency_rare(:,3);
+gain_rarecommdiff_realdata = gambling_frequency_rare(:,1)-gambling_frequency_comm(:,1);
+mixed_rarecommdiff_realdata = gambling_frequency_rare(:,2)-gambling_frequency_comm(:,2);
+loss_rarecommdiff_realdata = gambling_frequency_rare(:,3)-gambling_frequency_comm(:,3);
 
-gain_common_rbpersevdiff = gambling_frequency_modelgenerated_3_comm(:,1);
-mixed_common_rbpersevdiff = gambling_frequency_modelgenerated_3_comm(:,2);
-loss_common_rbpersevdiff = gambling_frequency_modelgenerated_3_comm(:,3);
-gain_rare_rbpersevdiff = gambling_frequency_modelgenerated_3_odd(:,1);
-mixed_rare_rbpersevdiff = gambling_frequency_modelgenerated_3_odd(:,2);
-loss_rare_rbpersevdiff = gambling_frequency_modelgenerated_3_odd(:,3);
+gain_rarecommdiff_rbpersevdiff = gambling_frequency_modelgenerated_3_odd(:,1)-gambling_frequency_modelgenerated_3_comm(:,1);
+mixed_rarecommdiff_rbpersevdiff = gambling_frequency_modelgenerated_3_odd(:,2)-gambling_frequency_modelgenerated_3_comm(:,2);
+loss_rarecommondiff_rbpersevdiff = gambling_frequency_modelgenerated_3_odd(:,3)-gambling_frequency_modelgenerated_3_comm(:,3);
 
-gain_common_lapsemodel = gambling_frequency_modelgenerated_comm(:,1);
-mixed_common_lapsemodel = gambling_frequency_modelgenerated_comm(:,2);
-loss_common_lapsemodel = gambling_frequency_modelgenerated_comm(:,3);
-gain_rare_lapsemodel = gambling_frequency_modelgenerated_odd(:,1);
-mixed_rare_lapsemodel = gambling_frequency_modelgenerated_odd(:,2);
-loss_rare_lapsemodel = gambling_frequency_modelgenerated_odd(:,3);
+gain_rarecommdiff_lapsemodel = gambling_frequency_modelgenerated_odd(:,1)-gambling_frequency_modelgenerated_comm(:,1);
+mixed_rarecommdiff_lapsemodel = gambling_frequency_modelgenerated_odd(:,2)-gambling_frequency_modelgenerated_comm(:,2);
+loss_rarecommdiff_lapsemodel = gambling_frequency_modelgenerated_odd(:,3)-gambling_frequency_modelgenerated_comm(:,3);
 
-gain_common_stochasticitymodel = gambling_frequency_modelgenerated_2_comm(:,1);
-mixed_common_stochasticitymodel = gambling_frequency_modelgenerated_2_comm(:,2);
-loss_common_stochasticitymodel = gambling_frequency_modelgenerated_2_comm(:,3);
-gain_rare_stochasticitymodel = gambling_frequency_modelgenerated_2_odd(:,1);
-mixed_rare_stochasticitymodel = gambling_frequency_modelgenerated_2_odd(:,2);
-loss_rare_stochasticitymodel = gambling_frequency_modelgenerated_2_odd(:,3);
-source_data_4 = table(gain_common_realdata,mixed_common_realdata,loss_common_realdata,...
-    gain_rare_realdata,mixed_rare_realdata,loss_rare_realdata,...
-    gain_common_rbpersevdiff,mixed_common_rbpersevdiff,loss_common_rbpersevdiff,...
-    gain_rare_rbpersevdiff,mixed_rare_rbpersevdiff,loss_rare_rbpersevdiff,...
-    gain_common_lapsemodel,mixed_common_lapsemodel,loss_common_lapsemodel,...
-    gain_rare_lapsemodel,mixed_rare_lapsemodel,loss_rare_lapsemodel,...
-    gain_common_stochasticitymodel,mixed_common_stochasticitymodel,loss_common_stochasticitymodel,...
-    gain_rare_stochasticitymodel,mixed_rare_stochasticitymodel,loss_rare_stochasticitymodel);
+gain_rarecommdiff_stochasticitymodel = gambling_frequency_modelgenerated_2_odd(:,1)-gambling_frequency_modelgenerated_2_comm(:,1);
+mixed_rarecommdiff_stochasticitymodel = gambling_frequency_modelgenerated_2_odd(:,2)-gambling_frequency_modelgenerated_2_comm(:,2);
+loss_rarecommdiff_stochasticitymodel = gambling_frequency_modelgenerated_2_odd(:,3)-gambling_frequency_modelgenerated_2_comm(:,3);
 
-% writetable(source_data_4,'source_data_4.csv')
+
+source_data_4a = table(gain_rarecommdiff_realdata,mixed_rarecommdiff_realdata,loss_rarecommdiff_realdata,...
+    gain_rarecommdiff_rbpersevdiff,mixed_rarecommdiff_rbpersevdiff,loss_rarecommondiff_rbpersevdiff,...
+    gain_rarecommdiff_lapsemodel,mixed_rarecommdiff_lapsemodel,loss_rarecommdiff_lapsemodel,...
+    gain_rarecommdiff_stochasticitymodel,mixed_rarecommdiff_stochasticitymodel,loss_rarecommdiff_stochasticitymodel);
+
+% writetable(source_data_4a,'source_data_4a.csv')
+
+source_data_5b1 = table(gain_rarecommdiff_realdata,mixed_rarecommdiff_realdata,loss_rarecommdiff_realdata,...
+    gain_rarecommdiff_rbpersevdiff,mixed_rarecommdiff_rbpersevdiff,loss_rarecommondiff_rbpersevdiff);
+
+% writetable(source_data_5b1,'source_data_5b1.csv')
+
+source_data_6b1 = table(gain_rarecommdiff_realdata,mixed_rarecommdiff_realdata,loss_rarecommdiff_realdata,...
+    gain_rarecommdiff_rbpersevdiff,mixed_rarecommdiff_rbpersevdiff,loss_rarecommondiff_rbpersevdiff);
+
+% writetable(source_data_6b1,'source_data_6b1.csv')
+
+
+%% model predictions for stay effect
+
+
+stay_frequency_modelgenerated_comm = zeros(length(alldata),3);
+stay_frequency_modelgenerated_rare = zeros(length(alldata),3);
+stay_frequency_modelgenerated_2_comm = zeros(length(alldata),3);
+stay_frequency_modelgenerated_2_rare = zeros(length(alldata),3);
+stay_frequency_modelgenerated_3_comm = zeros(length(alldata),3);
+stay_frequency_modelgenerated_3_rare = zeros(length(alldata),3);
+stay_frequency_realdata_comm = zeros(length(alldata),3);
+stay_frequency_realdata_rare = zeros(length(alldata),3);
+
+for s = 1:length(alldata)
+    t = alldata(s).data;
+    % isolating trials where stay happens
+    common = t(:,16)==1; oddball = t(:,16)~=1; 
+    gain_d = t(:,3)>0; mixed_d = t(:,3)==0; loss_d = t(:,3)<0;
+    
+    stay_frequency_modelgenerated_comm(s,1) = mean(t(common & gain_d,model1_stay_idx),'omitnan'); % common gain domain
+    stay_frequency_modelgenerated_rare(s,1) = mean(t(oddball & gain_d,model1_stay_idx),'omitna'); % oddball gain   
+    stay_frequency_modelgenerated_comm(s,2) = mean(t(common & mixed_d,model1_stay_idx),'omitnan'); % common mixed domain
+    stay_frequency_modelgenerated_rare(s,2) = mean(t(oddball & mixed_d,model1_stay_idx),'omitnan'); % oddball mixed
+    stay_frequency_modelgenerated_comm(s,3) = mean(t(common & loss_d,model1_stay_idx),'omitnan'); % common loss domain
+    stay_frequency_modelgenerated_rare(s,3) = mean(t(oddball & loss_d,model1_stay_idx),'omitnan'); % oddball loss
+
+    stay_frequency_modelgenerated_2_comm(s,1) = mean(t(common & gain_d,model2_stay_idx),'omitnan'); % common gain domain
+    stay_frequency_modelgenerated_2_rare(s,1) = mean(t(oddball & gain_d,model2_stay_idx),'omitna'); % oddball gain   
+    stay_frequency_modelgenerated_2_comm(s,2) = mean(t(common & mixed_d,model2_stay_idx),'omitnan'); % common mixed domain
+    stay_frequency_modelgenerated_2_rare(s,2) = mean(t(oddball & mixed_d,model2_stay_idx),'omitnan'); % oddball mixed
+    stay_frequency_modelgenerated_2_comm(s,3) = mean(t(common & loss_d,model2_stay_idx),'omitnan'); % common loss domain
+    stay_frequency_modelgenerated_2_rare(s,3) = mean(t(oddball & loss_d,model2_stay_idx),'omitnan'); % oddball loss
+        
+    stay_frequency_modelgenerated_3_comm(s,1) = mean(t(common & gain_d,fullmodel_stay_idx),'omitnan'); % common gain domain
+    stay_frequency_modelgenerated_3_rare(s,1) = mean(t(oddball & gain_d,fullmodel_stay_idx),'omitna'); % oddball gain   
+    stay_frequency_modelgenerated_3_comm(s,2) = mean(t(common & mixed_d,fullmodel_stay_idx),'omitnan'); % common mixed domain
+    stay_frequency_modelgenerated_3_rare(s,2) = mean(t(oddball & mixed_d,fullmodel_stay_idx),'omitnan'); % oddball mixed
+    stay_frequency_modelgenerated_3_comm(s,3) = mean(t(common & loss_d,fullmodel_stay_idx),'omitnan'); % common loss domain
+    stay_frequency_modelgenerated_3_rare(s,3) = mean(t(oddball & loss_d,fullmodel_stay_idx),'omitnan'); % oddball loss
+    
+    stayed = diff(t(:,7))==0; %repeated choice to stimulus
+    gain_d = t(2:end,3)>0; mixed_d = t(2:end,3)==0; loss_d = t(2:end,3)<0;
+    common = t(2:end,16)==1; oddball = t(2:end,16)~=1;
+       
+    stay_frequency_realdata_comm(s,1) = mean(stayed(common & gain_d),'omitnan'); % common gain domain
+    stay_frequency_realdata_rare(s,1) = mean(stayed(oddball & gain_d),'omitnan'); % oddball gain   
+    stay_frequency_realdata_comm(s,2) = mean(stayed(common & mixed_d),'omitnan'); % common mixed domain
+    stay_frequency_realdata_rare(s,2) = mean(stayed(oddball & mixed_d),'omitnan'); % oddball mixed
+    stay_frequency_realdata_comm(s,3) = mean(stayed(common & loss_d),'omitnan'); % common loss domain
+    stay_frequency_realdata_rare(s,3) = mean(stayed(oddball & loss_d),'omitnan'); % oddball loss
+
+end
+
+stay_frequency_realdata_comm = stay_frequency_realdata_comm * 100;
+stay_frequency_realdata_rare = stay_frequency_realdata_rare * 100;
+stay_frequency_modelgenerated_comm = stay_frequency_modelgenerated_comm * 100;
+stay_frequency_modelgenerated_rare = stay_frequency_modelgenerated_rare * 100;
+stay_frequency_modelgenerated_2_comm = stay_frequency_modelgenerated_2_comm * 100;
+stay_frequency_modelgenerated_2_rare = stay_frequency_modelgenerated_2_rare * 100;
+stay_frequency_modelgenerated_3_comm = stay_frequency_modelgenerated_3_comm * 100;
+stay_frequency_modelgenerated_3_rare = stay_frequency_modelgenerated_3_rare * 100;
+
+% save the source data
+stay_gain_rarecommdiff_realdata = stay_frequency_realdata_rare(:,1)-stay_frequency_realdata_comm(:,1);
+stay_mixed_rarecommdiff_realdata = stay_frequency_realdata_rare(:,2)-stay_frequency_realdata_comm(:,2);
+stay_loss_rarecommdiff_realdata = stay_frequency_realdata_rare(:,3)-stay_frequency_realdata_comm(:,3);
+
+stay_gain_rarecommdiff_rbpersevdiff = stay_frequency_modelgenerated_3_rare(:,1)-stay_frequency_modelgenerated_3_comm(:,1);
+stay_mixed_rarecommdiff_rbpersevdiff = stay_frequency_modelgenerated_3_rare(:,2)-stay_frequency_modelgenerated_3_comm(:,2);
+stay_loss_rarecommondiff_rbpersevdiff = stay_frequency_modelgenerated_3_rare(:,3)-stay_frequency_modelgenerated_3_comm(:,3);
+
+stay_gain_rarecommdiff_lapsemodel = stay_frequency_modelgenerated_rare(:,1)-stay_frequency_modelgenerated_comm(:,1);
+stay_mixed_rarecommdiff_lapsemodel = stay_frequency_modelgenerated_rare(:,2)-stay_frequency_modelgenerated_comm(:,2);
+stay_loss_rarecommdiff_lapsemodel = stay_frequency_modelgenerated_rare(:,3)-stay_frequency_modelgenerated_comm(:,3);
+
+stay_gain_rarecommdiff_stochasticitymodel = stay_frequency_modelgenerated_2_rare(:,1)-stay_frequency_modelgenerated_2_comm(:,1);
+stay_mixed_rarecommdiff_stochasticitymodel = stay_frequency_modelgenerated_2_rare(:,2)-stay_frequency_modelgenerated_2_comm(:,2);
+stay_loss_rarecommdiff_stochasticitymodel = stay_frequency_modelgenerated_2_rare(:,3)-stay_frequency_modelgenerated_2_comm(:,3);
+
+
+source_data_4b = table(stay_gain_rarecommdiff_realdata,stay_mixed_rarecommdiff_realdata,stay_loss_rarecommdiff_realdata,...
+    stay_gain_rarecommdiff_rbpersevdiff,stay_mixed_rarecommdiff_rbpersevdiff,stay_loss_rarecommondiff_rbpersevdiff,...
+    stay_gain_rarecommdiff_lapsemodel,stay_mixed_rarecommdiff_lapsemodel,stay_loss_rarecommdiff_lapsemodel,...
+    stay_gain_rarecommdiff_stochasticitymodel,stay_mixed_rarecommdiff_stochasticitymodel,stay_loss_rarecommdiff_stochasticitymodel);
+
+% writetable(source_data_4b,'source_data_4b.csv')
+
+
+source_data_5b2 = table(stay_gain_rarecommdiff_realdata,stay_mixed_rarecommdiff_realdata,stay_loss_rarecommdiff_realdata,...
+    stay_gain_rarecommdiff_rbpersevdiff,stay_mixed_rarecommdiff_rbpersevdiff,stay_loss_rarecommondiff_rbpersevdiff);
+% writetable(source_data_5b2,'source_data_5b2.csv')
+
+source_data_6b2 = table(stay_gain_rarecommdiff_realdata,stay_mixed_rarecommdiff_realdata,stay_loss_rarecommdiff_realdata,...
+    stay_gain_rarecommdiff_rbpersevdiff,stay_mixed_rarecommdiff_rbpersevdiff,stay_loss_rarecommondiff_rbpersevdiff);
+writetable(source_data_6b2,'source_data_6b2.csv')
+
+%% Figure 4, 5B or 6B: Lapse model and delta mu model risk taking predictions comparison 
+% Comparing Model Generated and Real data Rare - Common Gambling Rates
+% Main Effects
+
+rarecommdiff_risktaking_realdata = gambling_frequency_rare - gambling_frequency_comm;
+competing_modelpred{1} = gambling_frequency_modelgenerated_3_odd-gambling_frequency_modelgenerated_3_comm;
+competing_modelpred{2} = gambling_frequency_modelgenerated_2_odd-gambling_frequency_modelgenerated_2_comm;
+competing_modelpred{3}  = gambling_frequency_modelgenerated_odd-gambling_frequency_modelgenerated_comm;
+
+
+competing_model_name = {sprintf('%s: (n = %.0f)',study_title,length(alldata)),model_name,model_name_2,model_name_1};
+
+ylabel_name_risk = {'Rare - Common trials:';'Chose risky option (%)'};
+% ylabel_name_risk = {'B ending - A ending trials:';'Chose risky option (%)'};
+
+yaxislimits = [-12 12];
+
+colorscheme = [0.47 0.25 0.80;0.83 0.14 0.14;1.00 0.54 0.00]; % color map for model predictions
+barcolor = '#DED0BF';
+
+% num_modelpredictions = 1; % run if you only want to show the full model predictions on the plot
+num_modelpredictions = length(competing_modelpred); % run if you want to show model predictions from lapse model and split mu model too 
+
+
+threebarplot_modelpredictions_ontop(rarecommdiff_risktaking_realdata,ylabel_name_risk,yaxislimits,competing_modelpred,competing_model_name,colorscheme,num_modelpredictions,barcolor,study_title);
+
+% creating the same bar plot for perseveration effect
+
+
+rarecommdiff_stay_realdata = stay_frequency_realdata_rare - stay_frequency_realdata_comm;
+competing_modelpred_stay{1} = stay_frequency_modelgenerated_3_rare-stay_frequency_modelgenerated_3_comm;
+competing_modelpred_stay{2} = stay_frequency_modelgenerated_2_rare-stay_frequency_modelgenerated_2_comm;
+competing_modelpred_stay{3}  = stay_frequency_modelgenerated_rare-stay_frequency_modelgenerated_comm;
+
+ylabel_name_stay = {'Rare - Common trials:'; 'Stayed with previous option (%)'};
+% ylabel_name_stay = {'B ending - A ending trials:'; 'Stayed with previous option (%)'}; % For experiments 5 and 6
+
+
+barcolor = '#D3D5DD';
+
+
+threebarplot_modelpredictions_ontop(rarecommdiff_stay_realdata,ylabel_name_stay,yaxislimits,competing_modelpred_stay,competing_model_name,colorscheme,num_modelpredictions,barcolor,study_title);
 
 toc
+
 %% PLOTTING FUNCTIONS %%%%%%
 
 function b = sixbarplot(common_frequencies,rare_frequencies,list_yloc,ylabel_name,study_title)
@@ -621,8 +762,8 @@ function b = sixbarplot(common_frequencies,rare_frequencies,list_yloc,ylabel_nam
     [p_OClossgam,~] = signrank(rare_frequencies(:,3)-common_frequencies(:,3));
     [sig_stars,fz] = sigstar([p_OCgaingam,p_OCmixedgam,p_OClossgam]);;
     
-    common_se = nanstd(common_frequencies)./sqrt(sum(~isnan(common_frequencies)));
-    oddballs_se = nanstd(rare_frequencies)./sqrt(sum(~isnan(rare_frequencies)));
+    common_se = std(common_frequencies,'omitnan')./sqrt(sum(~isnan(common_frequencies)));
+    oddballs_se = std(rare_frequencies,'omitnan')./sqrt(sum(~isnan(rare_frequencies)));
     OCdiff_se = std(rare_frequencies-common_frequencies,'omitnan')./sqrt(sum(~isnan(rare_frequencies-common_frequencies)));
     se_bars = [common_se; oddballs_se];
 
@@ -631,7 +772,7 @@ function b = sixbarplot(common_frequencies,rare_frequencies,list_yloc,ylabel_nam
     trial_types = {'gain','mixed','loss'};
     for i = 1:3
         [OCdiffp_value,~] = signrank(rare_frequencies(:,i)-common_frequencies(:,i));
-        fprintf(sprintf('O-C rate diff %s trials %s: (%.02f %s %.02f%s, p = %.03f)\n',...
+        fprintf(sprintf('Rare - Common rate diff %s trials %s: (%.02f %s %.02f%s, p = %.03f)\n',...
             study_title,trial_types{i},mean(rare_frequencies(:,i)-common_frequencies(:,i),'omitnan'),char(177),...
             OCdiff_se(:,i),'%%',OCdiffp_value))
     end
@@ -875,10 +1016,10 @@ function b = choicecurve_halves(common_bins,rare_bins,ylabel_name,risky_or_stay,
     
     [sig_stars,fontsize] = sigstar([p_OClowstay,p_OChighstay]);
 
-    fprintf(sprintf('low P(%s) O-C diff: (%.02f %s %.02f%s,p = %.03f)\n',...
+    fprintf(sprintf('low P(%s) Rare - Common diff: (%.02f %s %.02f%s,p = %.03f)\n',...
         risky_or_stay,mean(OC_lowgroup,'omitnan'),char(177),OC_lowgroup_se,'%%',p_OClowstay))
 
-    fprintf(sprintf('high P(%s) O-C diff: (%.02f %s %.02f%s,p = %.03f)\n',...
+    fprintf(sprintf('high P(%s) Rare - Common diff: (%.02f %s %.02f%s,p = %.03f)\n',...
         risky_or_stay,mean(OC_highgroup,'omitnan'),char(177),OC_highgroup_se,'%%',p_OChighstay))
 
     
@@ -915,57 +1056,76 @@ function b = choicecurve_halves(common_bins,rare_bins,ylabel_name,risky_or_stay,
 end
 
 
-function b = model_predictions_6barplot(gambling_frequency_comm,gambling_frequency_rare,list_yloc,ylabel_name,study_title,color_comm,color_rare) 
-    % REAL DATA
-    [p_OCgaingam,~] = signrank(gambling_frequency_rare(:,1)-gambling_frequency_comm(:,1))
-    [p_OCmixedgam,~] = signrank(gambling_frequency_rare(:,2)-gambling_frequency_comm(:,2))
-    [p_OClossgam,~] = signrank(gambling_frequency_rare(:,3)-gambling_frequency_comm(:,3))
+function b = threebarplot_modelpredictions_ontop(bar_data,ylabel_name,yaxislimits,competing_modelpred,competing_model_name,colorscheme,num_modelpredictions,barcolor,study_title)
+    
+    
+    [p_OCgaingam,~] = signrank(bar_data(:,1));
+    [p_OCmixedgam,~] = signrank(bar_data(:,2));
+    [p_OClossgam,~] = signrank(bar_data(:,3));
     [sig_stars,fz] = sigstar([p_OCgaingam,p_OCmixedgam,p_OClossgam]);
+    se_bars = std(bar_data,'omitnan')./sqrt(sum(~isnan(bar_data)));
     
-    common_se = nanstd(gambling_frequency_comm)./sqrt(sum(~isnan(gambling_frequency_comm)));
-    oddballs_se = nanstd(gambling_frequency_rare)./sqrt(sum(~isnan(gambling_frequency_rare)));
-    se_bars = [common_se; oddballs_se];
-    grouped_bars = vertcat(nanmean(gambling_frequency_comm),nanmean(gambling_frequency_rare))';
-    
-    hold on;
-    b = bar(grouped_bars,'grouped','EdgeColor','black','LineWidth',1.5,'BarWidth', 0.8); 
-    set(b(1),...
-        'FaceColor',color_comm);
-    set(b(2),...
-        'FaceColor',color_rare);
-    for x = 1:3
-        swarmchart(repmat(b(1).XData(x)-0.15, length(gambling_frequency_comm), 1),gambling_frequency_comm(:,x),2,...
-            'MarkerFaceColor','#adbaff','MarkerEdgeColor','#c9c9c9','XJitter','density','XJitterWidth',0.1);
-        swarmchart(repmat(b(2).XData(x)+0.15, length(gambling_frequency_rare), 1),gambling_frequency_rare(:,x),2,...
-            'MarkerFaceColor','#ffd4d4','MarkerEdgeColor','#c9c9c9','XJitter','density','XJitterWidth',0.1);
-    end    
-    ylim([0 80]);
-    set(gca,'xtick',1:3,'xticklabel',{'Gain trials','Mixed trials','Loss trials'});
-    ylabel(ylabel_name);
-    title(study_title);
-    hline = refline(0,50); hline.Color = 'black'; hline.LineStyle = '--'; hline.LineWidth= 0.2;
-    ylim([0 100])
-    yticks(0:25:100);    
-    [ngroups,nbars] = size(grouped_bars);
-    % Get the x coordinate of the bars
-    for i = 1:nbars
-        ctr(i,:) = bsxfun(@plus, b(1).XData, b(i).XOffset');    
-        ydt(i,:) = b(i).YData;    
-    end
-    errorbar(ctr, ydt, se_bars, '.black','LineWidth',2,'CapSize',7)
-    for i = 1:ngroups
-        xloc = [b(1).XData(i)+b(1).XOffset,b(2).XData(i)+b(2).XOffset];
-        yloc = [list_yloc(i),list_yloc(i)];
-        plot(xloc,yloc,...
-            'color', 'k',...
-            'linewidth', 1);
-        text(mean(xloc),mean(yloc)+3.5,sig_stars(i),...
-            'fontsize',fz(i),...
-            'HorizontalAlignment', 'center',...
-            'VerticalAlignment', 'middle');
-    end
-    text(0.6,95,sprintf('n=%.0f',length(gambling_frequency_rare)),'fontsize',14,'HorizontalAlignment', 'left');
-%     legend({'Common','Rare'});
-    hold off
 
+    trial_types = {'gain','mixed','loss'};
+    for i = 1:3
+        [OCdiffp_value,~] = signrank(bar_data(:,i));
+        fprintf(sprintf('Rare - Comm rate diff %s trials %s: (%.02f %s %.02f%s, p = %.03f)\n',...
+            study_title,trial_types{i},mean(bar_data(:,i),'omitnan'),char(177),...
+            se_bars(:,i),'%%',OCdiffp_value))
+    end    
+    
+    
+    figure4 = figure('color',[1 1 1]); 
+    axes1 = axes('Parent',figure4);
+    width=350; height=400;
+    set(gcf,'position',[10,10,width,height])
+    b = bar(mean(bar_data,'omitnan'),'grouped','EdgeColor','black','LineWidth',1.5,'BarWidth', 0.7); hold on;
+    set(b(1),'FaceColor',barcolor);
+    set(axes1, 'box','off');
+    
+    for p = 1:num_modelpredictions
+        ypoint(1,:) = mean(competing_modelpred{p},'omitnan');  
+        se_bars_model = std(competing_modelpred{p},'omitnan')./sqrt(sum(~isnan(competing_modelpred{p})));
+        errorbar((1:3) + p*0.08, ypoint, se_bars_model,"o", "MarkerSize",4,'Color',colorscheme(p,:),'LineWidth',2,'CapSize',7,'LineStyle','none','MarkerFaceColor',colorscheme(p,:)); hold on; 
+    
+    end
+    
+    above_max = bar_data>max(yaxislimits);
+    below_min = bar_data<min(yaxislimits);
+    
+    bar_data_points = bar_data; % modifying points that are out of range
+    bar_data_points(above_max) = max(yaxislimits);
+    bar_data_points(below_min) = min(yaxislimits);
+    
+    
+    errorbar(1:3, mean(bar_data,'omitnan'), se_bars, '.black','LineWidth',2,'CapSize',7); hold on; 
+    set(gca,'xtick',1:3,'xticklabel',{'Gain trials','Mixed trials','Loss trials'}); hold on;
+    ylim(yaxislimits.*1.1); yticks(-20:4:20);
+    xlim([0.3 3.7]);
+    xtickangle(30)
+    text(0.35,93,sprintf('n=%.0f',length(bar_data)),'fontsize',14,'HorizontalAlignment', 'left');
+    % ylabel(sprintf('%s',ylabel_name)); 
+    ylabel(ylabel_name); 
+    
+    xloc = b.XData;
+    yloc = b.YData;
+    for x = 1:3
+        swarmchart(repmat(b(1).XData(x)-0.15, length(bar_data), 1),bar_data_points(:,x),4,...
+            'MarkerFaceColor','#adbaff','MarkerEdgeColor','#8f8f8f','XJitter','density','XJitterWidth',0.15);
+    end
+    for i = 1:size(bar_data,2)   
+        if yloc(i) < 0
+            text(xloc(i),yloc(i)-3,sig_stars(i),...
+                    'fontsize',fz(i),...
+                    'HorizontalAlignment', 'center',...
+                    'VerticalAlignment', 'middle');
+        elseif yloc(i) > 0
+            text(xloc(i),yloc(i)+3,sig_stars(i),...Re
+                    'fontsize',fz(i),...
+                    'HorizontalAlignment', 'center',...
+                    'VerticalAlignment', 'middle'); 
+        end
+    end
+    % legend(competing_model_name,'NumColumns',1);
+    hold off
 end
