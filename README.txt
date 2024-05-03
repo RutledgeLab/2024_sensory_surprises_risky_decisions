@@ -1,5 +1,4 @@
 ## Surprising sounds bias risky decision making
-## DBPR NCOMMS-23-08295
 
 OVERVIEW
 -----------------------------------------------------------------------------------------------------
@@ -10,13 +9,15 @@ FOLDER CONTENTS
 -----------------------------------------------------------------------------------------------------
 * 'run_mainfigures.m' is the main script that produces the key analyses and figures in the manuscript
 
-* 'Exp[1-7]_cleaned.mat' contain the data for each of the seven experiments (total n = 1600) discussed in the manuscript
+* 'Exp[1-7]_data.mat' contain the data for each of the seven experiments (total n = 1600) discussed in the manuscript
 
-* 'fitmodel_omnibus_OBdiff_model.m' contains the script that defines and runs the main models. This script uses Maximum Likelihood Estimation (MLE) for parameter estimation.
+* 'fitmodel_omnibus_persevrb.m' contains the script that defines and runs the main models. This script uses Maximum Likelihood Estimation (MLE) for parameter estimation.
+
+* 'fitmodel_omnibus_rb.m' contains the script that defines and runs the Risky Bias model. This script uses Maximum Likelihood Estimation (MLE) for parameter estimation.
 
 * 'fitmodel_pt.m' contains the script that defines and runs a basic Prospect Theory model
 
-* 'fitmodel_pt_dLapsemodel.m' contains the script that defines the dLapse model featured in figure 4
+* 'fitmodel_dLapsemodel.m' contains the script that defines the dLapse model featured in figure 4
 
 * 'ttest_bf.m' is the function called to run Bayes Factor calculations
 
@@ -55,10 +56,10 @@ DEMO & INSTRUCTIONS FOR USE
 
 1. Open 'run_mainfigures.m'. 
 2. Run the script 
-	* Expected run time: 5 minutes
-	* Expected output: All Figures (2A,2B,2C,2D,3A,3B,3C,3D,4,5B,5C,6B,6C) from the manuscript. Key statistics from figures are printed in the console
+	* Expected run time: 3.5 minutes
+	* Expected output: All Figures (2A,2B,2C,2D,3A,3B,3C,3D,4,5B,5C,6B,6C,7) from the manuscript. Key statistics from figures are printed in the console
 3. Different studies can be selected in the '%% select a single study to make plots for' section (line 42-46) to produce plots and analyses for different datasets. 
-	* For example: '%% Figure 5 & 6: Both Persev & Bias Effects on the same plot.' can produce Figures 5C1, 5C2, 6C1, 6C2 from the manuscript if Experiments 3,4,5,or 6 are assigned to 'alldata' variable on line 44 and the analysis script is rerun.
+	* For example: '%% Figure 5 & 6: Both Persev & Bias Effects on the same plot.' can produce Figures 5C1, 5C2, 6C1, 6C2 from the manuscript if Experiments 3,4,5,6,or 7 are assigned to 'alldata' variable on line 44 and the analysis script is rerun.
 
 
 

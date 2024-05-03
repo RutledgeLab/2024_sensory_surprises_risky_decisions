@@ -42,7 +42,7 @@ exp5exp6 = vertcat(datasets{:}); % combines multiple struct arrays
 %% select a single study to make plots for
 
 alldata = exp1exp2;
-study_title = 'Experiments 1 and 2';
+study_title = 'Experiment 1 & 2';
 
 %% select 2 individual studies I want to compare
 
@@ -193,7 +193,6 @@ for s = 1:length(alldata)
     gain_d = t(2:end,3)>0; mixed_d = t(2:end,3)==0; loss_d = t(2:end,3)<0;
     common = t(2:end,16)==1; 
     oddball = t(2:end,16)~=1;
-%     oddball = t(2:end,16)==2;
 
     gam_stay_common(s,1) = mean(stayed(common & gain_d))*100; % common gain domain
     gam_stay_oddballs(s,1) = mean(stayed(oddball & gain_d))*100; % oddball gain   
@@ -223,14 +222,21 @@ source_data_3b = table(gain_common,mixed_common,loss_common,gain_rare,mixed_rare
 %%%%%%%% MODEL BASED RESULTS %%%%%%%%%%%%%%%%
 %% singling out a set of parameter splits
 
-choice_split = [1 0 1 0 1 0 1 0 0 0 0 0 1 1 1 1]; % Risky Bias Perseveration Difference Model
-choice_split = logical(choice_split);
-model_name = 'Risky Bias Perseveration Difference model';
 
-z = 1; % choose the splitvec to pick the model
-apav_params = nan(length(alldata),sum(choice_split));
-apav_params_study1 = nan(length(study1),sum(choice_split));
-apav_params_study2 = nan(length(study2),sum(choice_split));
+model_name = 'Risky Bias Perseveration Difference model';
+betalabel = {'\mu','\lambda','\alpha+','\alpha-','persev','risky bias'}; 
+parameters_to_split = {'persev','risky bias'};
+numParams = length(horzcat(betalabel,parameters_to_split));
+
+
+betalabel_rb = {'\mu','\lambda','\alpha+','\alpha-','risky bias'}; 
+parameters_to_split_rb = {'risky bias'};
+numParams_rb = length(horzcat(betalabel_rb,parameters_to_split_rb));
+
+
+apav_params = nan(length(alldata),numParams);
+apav_params_study1 = nan(length(study1),numParams);
+apav_params_study2 = nan(length(study2),numParams);
 pseudor2_study1 = nan(length(study1),1);
 pseudor2_study2 = nan(length(study2),1);
 pseudor2_study12 = nan(length(alldata),1);
@@ -259,7 +265,7 @@ for s=1:length(alldata)
     pseudor2_study12(s,1) = result.pseudoR2;
     
     
-    result = fitmodel_omnibus_OBdiff_model(alldata(s).data,choice_split);
+    result = fitmodel_omnibus_persevrb(alldata(s).data,parameters_to_split);
     alldata(s).result_omnibus_apav_model = result;
     alldata(s).data(:,fullmodel_risktaking_idx) = result.probchoice; % saving probchoice in 22nd data column
     curr_model = alldata(s).data(2:end,fullmodel_risktaking_idx);
@@ -267,35 +273,59 @@ for s=1:length(alldata)
     curr_probstay_model(prev_choice==0) = 1-curr_model(prev_choice==0);
     alldata(s).data(:,fullmodel_stay_idx) = [NaN; curr_probstay_model];
 
-    apav_params(s,:) = result.b(choice_split);
-    apav_params_betalabels = alldata(1).result_omnibus_apav_model.betalabel(choice_split); 
+    apav_params(s,:) = result.b;
+    apav_params_betalabels = alldata(1).result_omnibus_apav_model.betalabel; 
 end
 
 for s=1:length(study1)
     fprintf(sprintf('fitting model to participant %.0f of %.0f, study 1...\n',s,length(study1)))
-
-    result = fitmodel_omnibus_OBdiff_model(study1(s).data,choice_split);
+%     result = fitmodel_omnibus_rb(study1(s).data,parameters_to_split); % rb only model for 2D
+    result = fitmodel_omnibus_persevrb(study1(s).data,parameters_to_split);
     study1(s).result_omnibus_apav_model = result;
-    apav_params_study1(s,:) = result.b(choice_split);
-    apav_params_betalabels_study1 = study1(1).result_omnibus_apav_model.betalabel(choice_split);
+    apav_params_study1(s,:) = result.b;
+    apav_params_betalabels_study1 = study1(1).result_omnibus_apav_model.betalabel;
     pseudor2_study1(s,1) = result.pseudoR2;
 end
 
 for s=1:length(study2)
     fprintf(sprintf('fitting model to participant %.0f of %.0f, study 2...\n',s,length(study2)))
-    
-    result = fitmodel_omnibus_OBdiff_model(study2(s).data,choice_split);
+%     result = fitmodel_omnibus_rb(study2(s).data,parameters_to_split); % rb only model for 2D
+    result = fitmodel_omnibus_persevrb(study2(s).data,parameters_to_split);
     study2(s).result_omnibus_apav_model = result;
-    apav_params_study2(s,:) = result.b(choice_split);
-    apav_params_betalabels_study1 = study2(1).result_omnibus_apav_model.betalabel(choice_split); 
+    apav_params_study2(s,:) = result.b;
+    apav_params_betalabels_study2 = study2(1).result_omnibus_apav_model.betalabel; 
     pseudor2_study2(s,1) = result.pseudoR2;
 end
 
 
 %% Figure 5C & 6C: Both Persev & Bias Effects on the same plot.  
+%{
+predict_reward_responses = cell(length(alldata),1);
+carries_info_responses = cell(length(alldata),1);
 
+for s = 1:length(alldata)
+    predict_reward_responses{s,1} = alldata(s).predictedreward;
+    carries_info_responses{s,1} = alldata(s).carries_info;
+
+end
+[resp_key_ab,~,responses_carryinfo] = unique(carries_info_responses); % 1-IDK, 2-No, 3-Yes
+[resp_key_pr,~,responses_pr] = unique(predict_reward_responses); % 1-IDK, 2-No, 3-Yes
+
+response_question = responses_pr; % responses_pr or responses_carryinfo
+question_text = 'Predicts Reward';
+
+splitpersev = apav_params(response_question==1,strcmp(apav_params_betalabels,'{\Delta} persev'));
+splitrb = apav_params(response_question==1,strcmp(apav_params_betalabels,'{\Delta} risky bias'));
+%}
+
+% UNCOMMENT FOR ORIGINAL
+% 
 splitpersev = apav_params(:,strcmp(apav_params_betalabels,'{\Delta} persev'));
 splitrb = apav_params(:,strcmp(apav_params_betalabels,'{\Delta} risky bias'));
+
+% correlate the two effects
+[rho_persevrb,p_persevrb] = corr(splitpersev,splitrb,'Type','Spearman');
+fprintf(sprintf('Spearman rho = %.03f, p = %.03f',rho_persevrb,p_persevrb))
 
 % Making a pretty bar plot for parameter diffs
 orange_color_rb = [219 139 46]/255;
@@ -314,6 +344,7 @@ modelbased_barplot(splitrb,splitpersev,ylabel_text,xaxis_labels,yaxislimits,bar_
 
 riskybias_diff = splitrb;
 persev_diff = splitpersev;
+
 % source_data_5c1 = table(riskybias_diff,persev_diff);
 % writetable(source_data_5c1,'source_data_5c1.csv')
 
@@ -326,16 +357,40 @@ persev_diff = splitpersev;
 % source_data_6c2 = table(riskybias_diff,persev_diff);
 % writetable(source_data_6c2,'source_data_6c2.csv')
 
+% source_data_7b1 = table(riskybias_diff,persev_diff);
+% writetable(source_data_7b1,'source_data_7b1.csv')
+
+% source_data_7b2 = table(riskybias_diff,persev_diff);
+% writetable(source_data_7b2,'source_data_7b2.csv')
+
 %% Figure 2D: Risk Taking Main effect (model-based): Studies 1 and 2 separately
-splitrb_study1 = apav_params_study1(:,strcmp(apav_params_betalabels,'{\Delta} risky bias'));
-splitrb_study2 = apav_params_study2(:,strcmp(apav_params_betalabels,'{\Delta} risky bias'));
+% remember that for Figure 2D in the main paper, you're relying on the fit from just PT + rb
+% + dRb, not the full model
+
+
+rb_study1 = apav_params_study1(:,strcmp(apav_params_betalabels_study1,'risky bias'));
+rb_study2 = apav_params_study2(:,strcmp(apav_params_betalabels_study2,'risky bias'));
+
+param_idx = rb_study1;
+mean_vec1 = mean(param_idx,'omitnan');
+params_se = (std(param_idx)./sqrt(sum(~isnan(param_idx))))';
+fprintf(sprintf('Risky bias parameter %s: (%.03f %s %.03f)\n',...
+    study_title_1,mean_vec1,char(177),params_se(1)))
+param_idx = rb_study2;
+mean_vec1 = mean(param_idx,'omitnan');
+params_se = (std(param_idx)./sqrt(sum(~isnan(param_idx))))';
+fprintf(sprintf('Risky bias parameter %s: (%.03f %s %.03f)\n',...
+    study_title_2,mean_vec1,char(177),params_se(1)))
+
+splitrb_study1 = apav_params_study1(:,strcmp(apav_params_betalabels_study1,'{\Delta} risky bias'));
+splitrb_study2 = apav_params_study2(:,strcmp(apav_params_betalabels_study2,'{\Delta} risky bias'));
 
 ylabel_text = '\delta riskybias difference parameter estimate'; % for experiments 3 and 4
 % ylabel_text = '\delta difference parameter [B ending - A ending]'; % for experiments 5 and 6
 xaxis_labels = {study_title_1,study_title_2};
 yaxislimits = [-1.5 1.5];
 bar_colors_vec1vec2 = [orange_color_rb;orange_color_rb];
-vec1vec2_params = {'delta_riskybias_exp1','delta_riskybias_exp2'}
+vec1vec2_params = {'delta_riskybias_exp1','delta_riskybias_exp2'};
 
 modelbased_barplot(splitrb_study1,splitrb_study2,ylabel_text,xaxis_labels,yaxislimits,bar_colors_vec1vec2,vec1vec2_params);
 
@@ -347,16 +402,23 @@ riskybias_diff_study2 = splitrb_study2;
 source_data_2d = table(riskybias_diff_study1,riskybias_diff_study2);
 % writetable(source_data_2d,'source_data_2d.csv')
 
+
+[p_exp3to1,~] = ranksum(splitrb_study1,splitrb)
+[p_exp3to2,~] = ranksum(splitrb_study2,splitrb)
+% [p_exp34to12,~] = ranksum(splitrb_study1,splitrb)
+
+
+
 %% Figure 3D: Perseveration Main effect (model-based): Studies 1 and 2 separately
-splitpersev_study1 = apav_params_study1(:,strcmp(apav_params_betalabels,'{\Delta} persev'));
-splitpersev_study2 = apav_params_study2(:,strcmp(apav_params_betalabels,'{\Delta} persev'));
+splitpersev_study1 = apav_params_study1(:,strcmp(apav_params_betalabels_study1,'{\Delta} persev'));
+splitpersev_study2 = apav_params_study2(:,strcmp(apav_params_betalabels_study2,'{\Delta} persev'));
 
 ylabel_text = '\delta perseveration difference parameter estimate'; % for experiments 3 and 4
 % ylabel_text = '\delta difference parameter [B ending - A ending]'; % for experiments 5 and 6
 xaxis_labels = {study_title_1,study_title_2};
 yaxislimits = [-1.5 1.5];
 bar_colors_vec1vec2 = [periwinkle_color_persev;periwinkle_color_persev];
-vec1vec2_params = {'delta_persev_exp1','delta_persev_exp2'}
+vec1vec2_params = {'delta_persev_exp1','delta_persev_exp2'};
 
 
 modelbased_barplot(splitpersev_study1,splitpersev_study2,ylabel_text,xaxis_labels,yaxislimits,bar_colors_vec1vec2,vec1vec2_params);
@@ -444,8 +506,8 @@ for s=1:length(alldata)
     percentile_rare = round(tstay_rare(:,pt_probstay_idx)*(nbins-1)-med_stay(s,1))+1;
 
     for n = 1:nbins        
-        tstaybin_common(s,n) = nanmean(tstay_common(percentile_common==n,24)).*100;
-        tstaybin_rare(s,n) = nanmean(tstay_rare(percentile_rare==n,24)).*100;
+        tstaybin_common(s,n) = mean(tstay_common(percentile_common==n,24),'omitnan').*100;
+        tstaybin_rare(s,n) = mean(tstay_rare(percentile_rare==n,24),'omitnan').*100;
 
     end
 end
@@ -464,7 +526,7 @@ rare_highp = tstaybin_rare(:,2);
 source_data_3c = table(common_lowp,common_highp,rare_lowp,rare_highp);
 % writetable(source_data_3c,'source_data_3c.csv')
 
-
+%}
 %% 8 parameter risky bias and perseveration model
 
 pseudor2_model_1 = nan(length(alldata),1);
@@ -472,22 +534,16 @@ pseudor2_model_2 = nan(length(alldata),1);
 AIC_model_1 = nan(length(alldata),1);
 AIC_model_2 = nan(length(alldata),1);
 apav_params_model_1 = nan(length(alldata),6);
+delta_mu_model_params = nan(length(alldata),7);
 
-% pt_probstay_idx = 19;
-% model1_risktaking_idx = 20;
-% model2_risktaking_idx = 21;
-% fullmodel_risktaking_idx = 22;
-% model1_stay_idx =  24;
-% model2_stay_idx = 25;
-% fullmodel_stay_idx = 23;
 
 model_name_1 = 'Lapse model + \delta_{lapse}';
 % mu, lambda, alphagain, alphaloss, lapse comm, lapse odd
 
 for s=1:length(alldata)
     fprintf(sprintf('fitting lapse model to participant %.0f of %.0f...\n',s,length(alldata)))
-    result = fitmodel_pt_dLapsemodel(alldata(s).data);
-    alldata(s).result_pt_dLapsemodel = result;
+    result = fitmodel_dLapsemodel(alldata(s).data,{'lapse'}); %fits dLapse model       
+    alldata(s).result_dLapsemodel = result;
     alldata(s).data(:,model1_risktaking_idx) = result.probchoice; % saving probchoice in 20th data column
     apav_params_model_1(s,:) = result.b;
 
@@ -498,16 +554,17 @@ for s=1:length(alldata)
         
 end
 
-% mu, delta mu, lambda, alphagain, alphaloss, persev, riskybias, 
-choice_split = [1 1 1 0 1 0 1 0 0 0 0 0 1 0 1 0];
-choice_split = logical(choice_split);
-model_name_2 = 'Risky Bias Perseveration model + \delta_{\mu}';
 
+% mu, delta mu, lambda, alphagain, alphaloss, persev, riskybias, 
+
+model_name_2 = 'Risky Bias Perseveration model + \delta_{\mu}';
 
 for s=1:length(alldata)
     fprintf(sprintf('fitting delta mu model to participant %.0f of %.0f...\n',s,length(alldata)))
-    result = fitmodel_omnibus_OBdiff_model(alldata(s).data,choice_split);
-    alldata(s).result_omnibus_apav_model = result;
+    result = fitmodel_omnibus_persevrb(alldata(s).data,{'\mu'});
+    alldata(s).result_omnibus_apav_model_dMu = result;
+    delta_mu_model_params(s,:) = result.b;
+    
     alldata(s).data(:,model2_risktaking_idx) = result.probchoice; % saving probchoice in 21st data column
     prev_choice = alldata(s).data(1:end-1,7);
     
@@ -516,6 +573,7 @@ for s=1:length(alldata)
     alldata(s).data(:,model2_stay_idx) = [NaN; curr_probstay_model];    
         
 end
+
 
 %% Model predictions: Comparing different models
 gambling_frequency_modelgenerated_comm = nan(length(alldata),3);
@@ -612,6 +670,11 @@ source_data_6b1 = table(gain_rarecommdiff_realdata,mixed_rarecommdiff_realdata,l
 
 % writetable(source_data_6b1,'source_data_6b1.csv')
 
+source_data_7a1 = table(gain_rarecommdiff_realdata,mixed_rarecommdiff_realdata,loss_rarecommdiff_realdata,...
+    gain_rarecommdiff_rbpersevdiff,mixed_rarecommdiff_rbpersevdiff,loss_rarecommondiff_rbpersevdiff);
+
+% writetable(source_data_7a1,'source_data_7a1.csv')
+
 
 %% model predictions for stay effect
 
@@ -632,7 +695,7 @@ for s = 1:length(alldata)
     gain_d = t(:,3)>0; mixed_d = t(:,3)==0; loss_d = t(:,3)<0;
     
     stay_frequency_modelgenerated_comm(s,1) = mean(t(common & gain_d,model1_stay_idx),'omitnan'); % common gain domain
-    stay_frequency_modelgenerated_rare(s,1) = mean(t(oddball & gain_d,model1_stay_idx),'omitna'); % oddball gain   
+    stay_frequency_modelgenerated_rare(s,1) = mean(t(oddball & gain_d,model1_stay_idx),'omitnan'); % oddball gain   
     stay_frequency_modelgenerated_comm(s,2) = mean(t(common & mixed_d,model1_stay_idx),'omitnan'); % common mixed domain
     stay_frequency_modelgenerated_rare(s,2) = mean(t(oddball & mixed_d,model1_stay_idx),'omitnan'); % oddball mixed
     stay_frequency_modelgenerated_comm(s,3) = mean(t(common & loss_d,model1_stay_idx),'omitnan'); % common loss domain
@@ -696,9 +759,7 @@ source_data_4b = table(stay_gain_rarecommdiff_realdata,stay_mixed_rarecommdiff_r
     stay_gain_rarecommdiff_rbpersevdiff,stay_mixed_rarecommdiff_rbpersevdiff,stay_loss_rarecommondiff_rbpersevdiff,...
     stay_gain_rarecommdiff_lapsemodel,stay_mixed_rarecommdiff_lapsemodel,stay_loss_rarecommdiff_lapsemodel,...
     stay_gain_rarecommdiff_stochasticitymodel,stay_mixed_rarecommdiff_stochasticitymodel,stay_loss_rarecommdiff_stochasticitymodel);
-
 % writetable(source_data_4b,'source_data_4b.csv')
-
 
 source_data_5b2 = table(stay_gain_rarecommdiff_realdata,stay_mixed_rarecommdiff_realdata,stay_loss_rarecommdiff_realdata,...
     stay_gain_rarecommdiff_rbpersevdiff,stay_mixed_rarecommdiff_rbpersevdiff,stay_loss_rarecommondiff_rbpersevdiff);
@@ -707,6 +768,10 @@ source_data_5b2 = table(stay_gain_rarecommdiff_realdata,stay_mixed_rarecommdiff_
 source_data_6b2 = table(stay_gain_rarecommdiff_realdata,stay_mixed_rarecommdiff_realdata,stay_loss_rarecommdiff_realdata,...
     stay_gain_rarecommdiff_rbpersevdiff,stay_mixed_rarecommdiff_rbpersevdiff,stay_loss_rarecommondiff_rbpersevdiff);
 % writetable(source_data_6b2,'source_data_6b2.csv')
+
+source_data_7a2 = table(stay_gain_rarecommdiff_realdata,stay_mixed_rarecommdiff_realdata,stay_loss_rarecommdiff_realdata,...
+    stay_gain_rarecommdiff_rbpersevdiff,stay_mixed_rarecommdiff_rbpersevdiff,stay_loss_rarecommondiff_rbpersevdiff);
+% writetable(source_data_7a2,'source_data_7a2.csv')
 
 %% Figure 4, 5B or 6B: Lapse model and delta mu model risk taking predictions comparison 
 % Comparing Model Generated and Real data Rare - Common Gambling Rates
@@ -836,6 +901,8 @@ function b = modelfree_avg_fourbarplot(common_frequencies,rare_frequencies,overa
     
     [p_study1,~] = signrank(ob_diff_study1);
     [p_study2,~] = signrank(ob_diff_study2);
+%     [h,p_study1] = ttest(ob_diff_study1);
+%     [h,p_study2] = ttest(ob_diff_study2);
     [sig_stars,fontsize] = sigstar([p_study1 p_study2]);
     [p_study1study2_gam, ~] = ranksum(overall_study1,overall_study2);
     [sig_stars_group,fontsize_group] = sigstar(p_study1study2_gam);
@@ -850,9 +917,14 @@ function b = modelfree_avg_fourbarplot(common_frequencies,rare_frequencies,overa
     gam_obdiff_se_study1 = std(ob_diff_study1,'omitnan')./sqrt(sum(~isnan(ob_diff_study1)));
     gam_obdiff_se_study2 = std(ob_diff_study2,'omitnan')./sqrt(sum(~isnan(ob_diff_study2)));
     
+%     [bf10_gameffect_study1,~] = ttest_bf(ob_diff_study1,'tail','right');
     [bf10_gameffect_study1,~] = ttest_bf(ob_diff_study1);
+    
     bf01_gameffect_study1 = 1/bf10_gameffect_study1;
+
+%     [bf10_gameffect_study2,~] = ttest_bf(ob_diff_study2,'tail','right');
     [bf10_gameffect_study2,~] = ttest_bf(ob_diff_study2);
+    
     bf01_gameffect_study2 = 1/bf10_gameffect_study2;
     
 
@@ -1069,7 +1141,9 @@ function b = threebarplot_modelpredictions_ontop(bar_data,ylabel_name,yaxislimit
 
     trial_types = {'gain','mixed','loss'};
     for i = 1:3
+%         [OCdiffp_value,~] = signrank(bar_data(:,i),0,'tail','right');
         [OCdiffp_value,~] = signrank(bar_data(:,i));
+       
         [bf10_3bar,~] = ttest_bf(bar_data(:,i));
         bf01_3bar = 1/bf10_3bar;       
         fprintf(sprintf('Rare - Comm rate diff %s trials %s: (%.02f %s %.02f%s, p = %.03f, BF01 = %.02f)\n',...
