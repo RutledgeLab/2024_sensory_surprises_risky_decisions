@@ -50,7 +50,7 @@
 	* Expected run time: 3.5 minutes
 	* Expected output: All Figures (2A,2B,2C,2D,3A,3B,3C,3D,4,5B,5C,6B,6C,7) from the manuscript. Key statistics from figures are printed in the console
 3. Different studies can be selected in the '%% select a single study to make plots for' section (line 46-50) to produce plots and analyses for different datasets. 
-	* For example: '%% Figure 5 & 6: Both Persev & Bias Effects on the same plot.' can produce Figures 5C1, 5C2, 6C1, 6C2 from the manuscript if Experiments 3,4,5,6,or 7 are assigned to 'alldata' variable on line 44 and the analysis script is rerun.
+	* For example: '%% Figure 5 & 6: Both Persev & Bias Effects on the same plot.' can produce Figures 5C1, 5C2, 6C1, 6C2 from the manuscript if Experiments 3,4,5,6,or 7 are assigned to 'alldata' variable on line 48 and the analysis script is rerun.
 
 
 
