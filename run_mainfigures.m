@@ -1,4 +1,4 @@
-%% Surprising Sounds bias risky decision making
+%% Surprising Sounds influence risky decision making
 
 % load the seven studies
 clear;
@@ -6,25 +6,29 @@ tic
 
 setFigureDefaults;
 
-load('Exp1_data.mat')
+% Loading the data for the 7 experiments (.mat struct arrays)
+data_dir = 'data_mat';
+
+
+load(fullfile(data_dir,'Exp1_data.mat'));
 exp1 = alldata;
 
-load('Exp2_data.mat')
+load(fullfile(data_dir,'Exp2_data.mat'));
 exp2 = alldata;
 
-load('Exp3_data.mat')
+load(fullfile(data_dir,'Exp3_data.mat'));
 exp3 = alldata;
 
-load('Exp4_data.mat')
+load(fullfile(data_dir,'Exp4_data.mat'));
 exp4 = alldata; 
 
-load('Exp5_data.mat')
+load(fullfile(data_dir,'Exp5_data.mat'));
 exp5 = alldata;
 
-load('Exp6_data.mat')
+load(fullfile(data_dir,'Exp6_data.mat'));
 exp6 = alldata;
 
-load('Exp7_data.mat')
+load(fullfile(data_dir,'Exp7_data.mat'));
 exp7 = alldata;
 
 
@@ -899,51 +903,60 @@ function b = modelfree_avg_fourbarplot(common_frequencies,rare_frequencies,overa
     ob_diff_study1 = rare_frequencies(:,1)-common_frequencies(:,1);
     ob_diff_study2 = rare_frequencies(:,2)-common_frequencies(:,2);
     
-    [p_study1,~] = signrank(ob_diff_study1);
-    [p_study2,~] = signrank(ob_diff_study2);
-%     [h,p_study1] = ttest(ob_diff_study1);
-%     [h,p_study2] = ttest(ob_diff_study2);
+    [p_study1,~,stat_study1] = signrank(ob_diff_study1);
+    [p_study2,~,stat_study2] = signrank(ob_diff_study2);
+
+    effectsize_study1 = meanEffectSize(rare_frequencies(:,1),common_frequencies(:,1),"Effect","mediandiff","Paired",true);
+    effectsize_study2 = meanEffectSize(rare_frequencies(:,2),common_frequencies(:,2),"Effect","mediandiff","Paired",true);
+
     [sig_stars,fontsize] = sigstar([p_study1 p_study2]);
-    [p_study1study2_gam, ~] = ranksum(overall_study1,overall_study2);
+    [p_study1study2_gam, ~,stat_overall] = ranksum(overall_study1,overall_study2);
     [sig_stars_group,fontsize_group] = sigstar(p_study1study2_gam);
     
+    effectsize_overall = meanEffectSize(overall_study1,overall_study2,"Effect","mediandiff","Paired",false);
+
     overall_study1_se = std(overall_study1,'omitnan')./sqrt(sum(~isnan(overall_study1)));
     overall_study2_se = std(overall_study2,'omitnan')./sqrt(sum(~isnan(overall_study2)));
 
-    
     se_bars = [common_se; oddballs_se];
     grouped_bars = vertcat(mean(common_frequencies,'omitnan'),mean(rare_frequencies,'omitnan'))';
     
     gam_obdiff_se_study1 = std(ob_diff_study1,'omitnan')./sqrt(sum(~isnan(ob_diff_study1)));
     gam_obdiff_se_study2 = std(ob_diff_study2,'omitnan')./sqrt(sum(~isnan(ob_diff_study2)));
     
-%     [bf10_gameffect_study1,~] = ttest_bf(ob_diff_study1,'tail','right');
     [bf10_gameffect_study1,~] = ttest_bf(ob_diff_study1);
-    
     bf01_gameffect_study1 = 1/bf10_gameffect_study1;
-
-%     [bf10_gameffect_study2,~] = ttest_bf(ob_diff_study2,'tail','right');
     [bf10_gameffect_study2,~] = ttest_bf(ob_diff_study2);
-    
     bf01_gameffect_study2 = 1/bf10_gameffect_study2;
     
 
     fprintf(sprintf('%s average %s rate: (%.02f %s %.02f%s)\n',...
         study_title_1,behav_measure,mean(overall_study1),char(177),overall_study1_se,'%%'))
 
-    fprintf(sprintf('%s %s rate diff: (%.02f %s %.02f%s, p = %.03f)\n',...
-        study_title_1,behav_measure,mean(ob_diff_study1),char(177),gam_obdiff_se_study1,'%%',p_study1))
+    fprintf(sprintf('%s %s rate diff: (meandiff = %.02f %s %.02f%s, W = %.0f, p = %.03f, two-sided Wilcoxon signed rank test)\n',...
+        study_title_1,behav_measure,...
+        mean(ob_diff_study1),char(177),gam_obdiff_se_study1,'%%', ...
+        stat_study1.signedrank,...
+        p_study1))
 
     fprintf(sprintf('%s Bayes Factor 01 (for the null): %.02f\n',study_title_1,bf01_gameffect_study1))
     
     fprintf(sprintf('%s average %s rate: (%.02f %s %.02f%s)\n',...
         study_title_2,behav_measure,mean(overall_study2),char(177),overall_study2_se,'%%'))
 
-    fprintf(sprintf('%s %s rate diff: (%.02f %s %.02f%s, p = %.03f)\n',...
-        study_title_2,behav_measure,mean(ob_diff_study2),char(177),gam_obdiff_se_study2,'%%',p_study2))
+    fprintf(sprintf('%s %s rate diff: (meandiff = %.02f %s %.02f%s, W = %.0f, p = %.03f, two-sided Wilcoxon signed rank test)\n',...
+        study_title_2,behav_measure, ...
+        mean(ob_diff_study2),char(177),gam_obdiff_se_study2,'%%',...
+        stat_study2.signedrank,...
+        p_study2))
 
     fprintf(sprintf('%s Bayes Factor 01 (for the null): %.02f\n',study_title_2,bf01_gameffect_study2))
     
+    fprintf(sprintf('%s vs. %s average %s rate comparison: (W = %.0f, p = %.03f, two-sided Wilcoxon rank sum test)\n)\n',...
+        study_title_1,study_title_2,behav_measure,...
+        stat_overall.ranksum,...
+        p_study1study2_gam))
+
     
     figure1 = figure('color',[1 1 1]);
     axes1 = axes('Parent',figure1);
